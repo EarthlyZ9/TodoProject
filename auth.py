@@ -1,15 +1,16 @@
 import copy
-from fastapi import FastAPI, Depends, HTTPException, status
-from pydantic import BaseModel, Field
-from typing import Optional, Union
-from sql_app import models
-from passlib.context import CryptContext
-from sql_app.database import SessionLocal, engine
-from sqlalchemy.orm import Session
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from main import raise_404_error
 from datetime import datetime, timedelta
+from typing import Optional, Union
+
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
+from passlib.context import CryptContext
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+
+from sql_app import models
+from sql_app.database import SessionLocal, engine
 from sql_app.database import secrets
 
 JWT_SECRET_KEY = secrets["JWT_SECRET_KEY"]
@@ -62,7 +63,6 @@ bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 models.Base.metadata.create_all(bind=engine)
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="token")
-
 
 app = FastAPI()
 
@@ -117,10 +117,10 @@ async def get_current_user(token: str = Depends(oauth2_bearer)):
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
         if username is None or user_id is None:
-            raise raise_401_error()
+            raise get_user_exception()
         return {"username": username, "user_id": user_id}
     except JWTError:
-        raise raise_401_error()
+        raise get_user_exception()
 
 
 @app.post(
