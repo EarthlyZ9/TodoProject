@@ -15,7 +15,7 @@ from sql_app.database import secrets
 
 JWT_SECRET_KEY = secrets["JWT_SECRET_KEY"]
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
 class UserBase(BaseModel):
@@ -136,7 +136,7 @@ def create_user(user: UserIn, db: Session = Depends(get_db)):
     return new_user
 
 
-@app.post("/token")
+@app.post("/token", tags=["Users"])
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):

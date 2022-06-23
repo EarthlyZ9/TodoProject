@@ -1,6 +1,6 @@
 .idea
 .venv
-sql_app/secrets.json
+secrets.json
 .pre-commit-config.yaml
 *.pyc
 __pycache__/
