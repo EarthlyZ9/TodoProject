@@ -3,7 +3,7 @@ import sys
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from dependencies import raise_404_error, get_todo_authorization_exception
+from dependencies import raise_404_error, get_authorization_exception
 from routers.auth import get_current_user
 from schemas import todo_schema
 from sql_app import models
@@ -14,6 +14,7 @@ sys.path.append("..")
 router = APIRouter(
     prefix="/todos",
     tags=["Todos"],
+    responses={404: {"description": "Cannot find todo for the provided id."}},
 )
 
 models.Base.metadata.create_all(bind=engine)
@@ -91,7 +92,7 @@ def get_todo_by_id(
     )
     if todo_model is not None:
         return todo_model
-    raise raise_404_error()
+    raise raise_404_error(detail="Cannot find todo for the provided id.")
 
 
 @router.patch(
@@ -118,7 +119,7 @@ def update_todo(
             .first()
         )
         if todo_by_id is None:
-            raise get_todo_authorization_exception()
+            raise get_authorization_exception()
 
     if todo.title:
         todo_by_id.title = todo.title
@@ -146,7 +147,7 @@ def delete_todo(
 ):
     todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
     if todo is None:
-        raise raise_404_error()
+        raise raise_404_error("Cannot find todo for the provided id.")
     else:
         todo = (
             db.query(models.Todo)
@@ -155,7 +156,7 @@ def delete_todo(
             .first()
         )
         if todo is None:
-            raise get_todo_authorization_exception()
+            raise get_authorization_exception()
 
     db.query(models.Todo).filter(models.Todo.id == todo_id).delete()
 

@@ -8,8 +8,8 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
-from dependencies import get_user_exception, token_exception
-from schemas import user_schemas
+from dependencies import get_user_exception, invalid_authentication_exception
+from schemas import user_schema
 from sql_app import models
 from sql_app.database import SessionLocal, engine
 from sql_app.database import secrets
@@ -46,9 +46,9 @@ def verify_password(plain_password, hashed_password):
     return bcrypt_context.verify(plain_password, hashed_password)
 
 
-def save_user(user: user_schemas.UserIn):
+def save_user(user: user_schema.UserIn):
     hashed_password = hash_password(user.password)
-    user_in_db = user_schemas.UserInDB(**user.dict(), hashed_password=hashed_password)
+    user_in_db = user_schema.UserInDB(**user.dict(), hashed_password=hashed_password)
     return user_in_db
 
 
@@ -89,10 +89,10 @@ async def get_current_user(token: str = Depends(oauth2_bearer)):
 @router.post(
     "/users",
     summary="Sign up",
-    response_model=user_schemas.UserOut,
+    response_model=user_schema.UserOut,
     responses={201: {"description": "Created user."}},
 )
-def create_user(user: user_schemas.UserIn, db: Session = Depends(get_db)):
+def create_user(user: user_schema.UserIn, db: Session = Depends(get_db)):
     new_user = models.User(**save_user(user).dict())
     db.add(new_user)
     db.commit()
@@ -105,7 +105,7 @@ def login_for_access_token(
 ):
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
-        raise token_exception()
+        raise invalid_authentication_exception()
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         user.username, user.id, expires_delta=access_token_expires
