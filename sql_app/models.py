@@ -1,6 +1,7 @@
-from sqlalchemy.orm import relationship
 from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
-from .database import Base
+from sqlalchemy.orm import relationship
+
+from sql_app.database import Base
 
 
 class Todo(Base):

@@ -1,70 +1,33 @@
-import copy
+import sys
 from datetime import datetime, timedelta
-from typing import Optional, Union
+from typing import Union
 
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import Depends, APIRouter
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from passlib.context import CryptContext
-from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from dependencies import get_user_exception, token_exception
+from schemas import user_schemas
 from sql_app import models
 from sql_app.database import SessionLocal, engine
 from sql_app.database import secrets
 
+sys.path.append("..")
+
 JWT_SECRET_KEY = secrets["JWT_SECRET_KEY"]
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
-
-
-class UserBase(BaseModel):
-    username: str
-    email: str
-    first_name: str
-    last_name: str
-    is_active: Optional[bool] = Field(default=True)
-
-    class Config:
-        orm_mode = True
-        schema_extra = {
-            "example": {
-                "username": "linda2927",
-                "email": "linda2927@naver.com",
-                "first_name": "Jisoo",
-                "last_name": "Lee",
-            }
-        }
-
-
-class UserIn(UserBase):
-    password: str
-
-    class Config(UserBase.Config):
-        schema_extra = copy.deepcopy(UserBase.Config.schema_extra)
-        schema_extra["example"]["password"] = "linda2927"
-
-
-class UserOut(UserBase):
-    pass
-
-
-class UserInDB(UserBase):
-    id: Optional[int]
-    hashed_password: str
-
-    class Config(UserBase.Config):
-        schema_extra = copy.deepcopy(UserBase.Config.schema_extra)
-        schema_extra["example"]["id"] = 0
-        schema_extra["example"]["hashed_password"] = ""
-
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 models.Base.metadata.create_all(bind=engine)
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="token")
 
-app = FastAPI()
+router = APIRouter(
+    prefix="/auth", tags=["Auth"], responses={401: {"user": "Not authorized."}}
+)
 
 
 def get_db():
@@ -83,9 +46,9 @@ def verify_password(plain_password, hashed_password):
     return bcrypt_context.verify(plain_password, hashed_password)
 
 
-def save_user(user: UserIn):
+def save_user(user: user_schemas.UserIn):
     hashed_password = hash_password(user.password)
-    user_in_db = UserInDB(**user.dict(), hashed_password=hashed_password)
+    user_in_db = user_schemas.UserInDB(**user.dict(), hashed_password=hashed_password)
     return user_in_db
 
 
@@ -123,20 +86,20 @@ async def get_current_user(token: str = Depends(oauth2_bearer)):
         raise get_user_exception()
 
 
-@app.post(
+@router.post(
     "/users",
-    tags=["Users"],
-    response_model=UserOut,
+    summary="Sign up",
+    response_model=user_schemas.UserOut,
     responses={201: {"description": "Created user."}},
 )
-def create_user(user: UserIn, db: Session = Depends(get_db)):
+def create_user(user: user_schemas.UserIn, db: Session = Depends(get_db)):
     new_user = models.User(**save_user(user).dict())
     db.add(new_user)
     db.commit()
     return new_user
 
 
-@app.post("/token", tags=["Users"])
+@router.post("/token", summary="Login")
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
@@ -149,22 +112,3 @@ def login_for_access_token(
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
-
-
-# Exceptions
-def get_user_exception():
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    return credentials_exception
-
-
-def token_exception():
-    token_exception_response = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Incorrect username or password",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    return token_exception_response
