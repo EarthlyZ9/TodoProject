@@ -32,14 +32,32 @@ class UserIn(UserBase):
 
 
 class UserOut(UserBase):
-    pass
-
-
-class UserInDB(UserBase):
-    id: Optional[int]
-    hashed_password: str
+    id: int
 
     class Config(UserBase.Config):
         schema_extra = copy.deepcopy(UserBase.Config.schema_extra)
         schema_extra["example"]["id"] = 0
+
+
+class UserInDB(UserOut):
+    hashed_password: str
+
+    class Config(UserBase.Config):
+        schema_extra = copy.deepcopy(UserBase.Config.schema_extra)
         schema_extra["example"]["hashed_password"] = ""
+
+
+class UserVerification(BaseModel):
+    username: str
+    password: str
+    new_password: str
+
+    class Config:
+        orm_mode = True
+        schema_extra = {
+            "example": {
+                "username": "linda2927",
+                "password": "password",
+                "new_password": "password2",
+            }
+        }

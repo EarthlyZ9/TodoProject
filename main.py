@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from routers import auth, todos
+from routers import auth, todos, users
 from sql_app import models
 from sql_app.database import engine
 
@@ -22,11 +22,15 @@ description = """
 tags_metadata = [
     {
         "name": "Todos",
-        "description": "Operations with todo items.",
+        "description": "Operations with todo items",
     },
     {
         "name": "Auth",
         "description": "Authentication and authorization",
+    },
+    {
+        "name": "Users",
+        "description": "User management",
     },
 ]
 
@@ -49,3 +53,4 @@ app = FastAPI(
 models.Base.metadata.create_all(bind=engine)
 app.include_router(auth.router)
 app.include_router(todos.router)
+app.include_router(users.router)
