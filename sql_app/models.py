@@ -4,6 +4,9 @@ from sqlalchemy.orm import relationship
 from sql_app.database import Base
 
 
+# TODO: How am I going to return resources including every related nested object (serialization)?
+
+
 class Todo(Base):
     __tablename__ = "todo"
 
@@ -38,11 +41,11 @@ class Address(Base):
     __tablename__ = "address"
 
     id = Column(Integer, primary_key=True, index=True)
-    address1 = (Column(String(100), nullable=False),)
-    address2 = (Column(String(100), nullable=False),)
-    city = (Column(String(50), nullable=False),)
-    state = (Column(String(50), nullable=False),)
-    country = (Column(String(100), nullable=False),)
-    zipcode = Column(String(5), nullable=False)
+    address1 = Column(String(100))
+    address2 = Column(String(100))
+    city = Column(String(50))
+    state = Column(String(50))
+    country = Column(String(100))
+    zipcode = Column(String(5))
 
     user_address = relationship("User", back_populates="address")
