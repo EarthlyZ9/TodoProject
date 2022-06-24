@@ -32,7 +32,7 @@ class UserIn(UserBase):
 
 
 class UserOut(UserBase):
-    id: int
+    id: Optional[int]
 
     class Config(UserBase.Config):
         schema_extra = copy.deepcopy(UserBase.Config.schema_extra)

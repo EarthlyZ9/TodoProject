@@ -87,7 +87,7 @@ async def get_current_user(token: str = Depends(oauth2_bearer)):
 
 
 @router.post(
-    "/users",
+    "/signup",
     summary="Sign up",
     response_model=user_schema.UserOut,
     responses={201: {"description": "Created user."}},
