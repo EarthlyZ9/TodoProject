@@ -33,7 +33,7 @@ def get_db():
 )
 def create_address(
     address: address_schema.AddressIn,
-    user: dict = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     address_model = models.Address()
@@ -47,7 +47,7 @@ def create_address(
     db.add(address_model)
     db.flush()  # returns id
 
-    user = db.query(models.User).filter(models.User.id == user.get("user_id")).first()
+    user = db.query(models.User).filter(models.User.id == current_user.id).first()
     user.address_id = address_model.id
 
     db.commit()

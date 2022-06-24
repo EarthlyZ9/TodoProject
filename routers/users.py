@@ -1,13 +1,13 @@
 import sys
+
 from fastapi import APIRouter, status, Depends
+from sqlalchemy.orm import Session
 
 from dependencies import raise_404_error, invalid_authentication_exception
 from routers.auth import get_current_user, hash_password, verify_password
 from schemas import user_schema
-
 from sql_app import models
 from sql_app.database import engine, SessionLocal
-from sqlalchemy.orm import Session
 
 sys.path.append("..")
 
@@ -43,13 +43,13 @@ def get_all_users(db: Session = Depends(get_db)):
     status_code=status.HTTP_200_OK,
     summary="Get user by user id (path).",
     operation_id="get_user_by_path",
-    response_model=user_schema.UserOut,
+    #  response_model=user_schema.UserOut,
 )
 def get_user_by_path(user_id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if user is None:
         raise raise_404_error(detail="Cannot find user for the provided id.")
-    return user
+    return user.address
 
 
 @router.get(
@@ -76,14 +76,10 @@ def get_user_by_query_params(user_id: int, db: Session = Depends(get_db)):
 )
 def update_user_password(
     user_verification: user_schema.UserVerification,
-    current_user: dict = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    user = (
-        db.query(models.User)
-        .filter(models.User.id == current_user.get("user_id"))
-        .first()
-    )
+    user = current_user
 
     if user_verification.username == user.username and verify_password(
         user_verification.password, user.hashed_password
@@ -105,11 +101,10 @@ def update_user_password(
     responses={200: {"description": "Successfully deleted user."}},
 )
 def delete_user(
-    current_user: dict = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-
-    db.query(models.User).filter(models.User.id == current_user.get("user_id")).delete()
+    db.query(models.User).filter(models.User.id == current_user.id).delete()
 
     db.commit()
 

@@ -74,14 +74,16 @@ def create_access_token(
     return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(oauth2_bearer)):
+async def get_current_user(
+    token: str = Depends(oauth2_bearer), db: Session = Depends(get_db)
+):
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=ALGORITHM)
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
         if username is None or user_id is None:
             raise get_user_exception()
-        return {"username": username, "user_id": user_id}
+        return db.query(models.User).filter(models.User.id == user_id).first()
     except JWTError:
         raise get_user_exception()
 

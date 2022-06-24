@@ -48,7 +48,7 @@ def get_all_admin(db: Session = Depends(get_db)):
 )
 def create_todo(
     todo: todo_schema.TodoIn,
-    user: dict = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     new_todo = models.Todo()
@@ -56,7 +56,7 @@ def create_todo(
     new_todo.description = todo.description
     new_todo.priority = todo.priority
     new_todo.complete = todo.complete
-    new_todo.owner_id = user.get("user_id")
+    new_todo.owner_id = current_user.id
 
     db.add(new_todo)
     db.commit()
@@ -67,10 +67,10 @@ def create_todo(
 @router.get(
     "/", summary="Get all todos of current user.", status_code=status.HTTP_200_OK
 )
-def get_todos(user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    todos = (
-        db.query(models.Todo).filter(models.Todo.owner_id == user.get("user_id")).all()
-    )
+def get_todos(
+    current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)
+):
+    todos = db.query(models.Todo).filter(models.Todo.owner_id == current_user.id).all()
     return todos
 
 
@@ -82,12 +82,14 @@ def get_todos(user: dict = Depends(get_current_user), db: Session = Depends(get_
     operation_id="get_todo_by_id",
 )
 def get_todo_by_id(
-    todo_id: int, user: dict = Depends(get_current_user), db: Session = Depends(get_db)
+    todo_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     todo_model = (
         db.query(models.Todo)
         .filter(models.Todo.id == todo_id)
-        .filter(models.Todo.owner_id == user.get("user_id"))
+        .filter(models.Todo.owner_id == current_user.id)
         .first()
     )
     if todo_model is not None:
@@ -105,7 +107,7 @@ def get_todo_by_id(
 def update_todo(
     todo_id: int,
     todo: todo_schema.TodoIn,
-    user: dict = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     todo_by_id = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
@@ -115,7 +117,7 @@ def update_todo(
         todo_by_id = (
             db.query(models.Todo)
             .filter(models.Todo.id == todo_id)
-            .filter(models.Todo.owner_id == user.get("user_id"))
+            .filter(models.Todo.owner_id == current_user.id)
             .first()
         )
         if todo_by_id is None:
@@ -143,7 +145,9 @@ def update_todo(
     responses={200: {"description": "Successfully deleted."}},
 )
 def delete_todo(
-    todo_id: int, user: dict = Depends(get_current_user), db: Session = Depends(get_db)
+    todo_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
     if todo is None:
@@ -152,7 +156,7 @@ def delete_todo(
         todo = (
             db.query(models.Todo)
             .filter(models.Todo.id == todo_id)
-            .filter(models.Todo.owner_id == user.get("user_id"))
+            .filter(models.Todo.owner_id == current_user.id)
             .first()
         )
         if todo is None:
