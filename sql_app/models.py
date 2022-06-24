@@ -27,5 +27,22 @@ class User(Base):
     last_name = Column(String(30))
     hashed_password = Column(String(50))
     is_active = Column(Boolean, default=True)
+    phone_number = Column(String(11))
+    address_id = Column(Integer, ForeignKey("address.id"), nullable=True)
 
     todos = relationship("Todo", back_populates="owner")
+    address = relationship("Address", back_populates="user_address")
+
+
+class Address(Base):
+    __tablename__ = "address"
+
+    id = Column(Integer, primary_key=True, index=True)
+    address1 = (Column(String(100), nullable=False),)
+    address2 = (Column(String(100), nullable=False),)
+    city = (Column(String(50), nullable=False),)
+    state = (Column(String(50), nullable=False),)
+    country = (Column(String(100), nullable=False),)
+    zipcode = Column(String(5), nullable=False)
+
+    user_address = relationship("User", back_populates="address")
