@@ -1,9 +1,7 @@
 import copy
-from typing import Optional, Union
+from typing import Optional
 
 from pydantic import BaseModel
-
-from schemas.user_schema import UserOut
 
 
 class AddressIn(BaseModel):
@@ -32,15 +30,7 @@ class AddressIn(BaseModel):
 
 class AddressOut(AddressIn):
     id: int
-    # resident: Union[UserOut, None] = None
 
     class Config(AddressIn.Config):
         schema_extra = copy.deepcopy(AddressIn.Config.schema_extra)
         schema_extra["example"]["id"] = 0
-        # schema_extra["example"]["resident"] = {
-        #     "id": 0,
-        #     "username": "linda2927",
-        #     "email": "linda2927@naver.com",
-        #     "first_name": "Jisoo",
-        #     "last_name": "Lee",
-        # }

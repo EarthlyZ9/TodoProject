@@ -3,11 +3,11 @@ import sys
 from fastapi import APIRouter, status, Depends
 from sqlalchemy.orm import Session
 
-from todo_proj.dependencies import raise_404_error, invalid_authentication_exception
 from routers.auth import get_current_user, hash_password, verify_password
 from schemas import user_schema
 from todo_proj import models
 from todo_proj.database import engine, SessionLocal
+from todo_proj.dependencies import raise_404_error, invalid_authentication_exception
 
 sys.path.append("..")
 
@@ -43,13 +43,13 @@ def get_all_users(db: Session = Depends(get_db)):
     status_code=status.HTTP_200_OK,
     summary="Get user by user id (path).",
     operation_id="get_user_by_path",
-    #  response_model=user_schema.UserOut,
+    response_model=user_schema.UserInDB,
 )
 def get_user_by_path(user_id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if user is None:
         raise raise_404_error(detail="Cannot find user for the provided id.")
-    return user.address
+    return user
 
 
 @router.get(
@@ -71,7 +71,7 @@ def get_user_by_query_params(user_id: int, db: Session = Depends(get_db)):
     status_code=status.HTTP_200_OK,
     summary="Update current user's password with user verification.",
     operation_id="update_user_password",
-    response_model=user_schema.UserOut,
+    response_model=user_schema.UserInDB,
     responses={200: {"description": "User password updated successfully."}},
 )
 def update_user_password(
@@ -79,14 +79,12 @@ def update_user_password(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    user = current_user
+    user = db.query(models.User).filter(models.User.id == current_user.id).first()
 
     if user_verification.username == user.username and verify_password(
         user_verification.password, user.hashed_password
     ):
-        hashed_password = hash_password(user_verification.new_password)
-        user.hashed_password = hashed_password
-
+        user.hashed_password = hash_password(user_verification.new_password)
         db.commit()
 
         return user

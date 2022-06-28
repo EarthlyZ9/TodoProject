@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 from routers import auth, todos, users, address
 from todo_proj import models
-from todo_proj.database import engine, SessionLocal
+from todo_proj.database import engine
 
 description = """
     TODO Project API 🚀

@@ -34,7 +34,7 @@ class User(Base):
     address_id = Column(Integer, ForeignKey("address.id"), nullable=True)
 
     todos = relationship("Todo", back_populates="owner")
-    address = relationship("Address", back_populates="resident", uselist=False)
+    address = relationship("Address", back_populates="user", uselist=False)
 
 
 class Address(Base):
@@ -48,6 +48,6 @@ class Address(Base):
     country = Column(String(100))
     zipcode = Column(String(5))
     apt_num = Column(String(20))
-    # resident_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    # user_id = Column(Integer, ForeignKey("user.id"))
 
-    resident = relationship("User", back_populates="address", uselist=False)
+    user = relationship("User", back_populates="address", uselist=False)

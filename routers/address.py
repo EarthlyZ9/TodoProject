@@ -1,21 +1,20 @@
 import sys
 
 from fastapi import APIRouter, Depends, status
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from routers.auth import get_current_user
-from schemas import address_schema
+from schemas import address_schema, address_user_schema
 from todo_proj import models
 from todo_proj.database import SessionLocal
+from todo_proj.dependencies import raise_404_error
 
 sys.path.append("..")
 
 router = APIRouter(
     prefix="/address",
     tags=["Address"],
-    responses={404: {"description": "Cannot find address."}},
+    responses={404: {"description": "Cannot find address for the provided id."}},
 )
 
 
@@ -27,11 +26,25 @@ def get_db():
         db.close()
 
 
+@router.get(
+    "/{address_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Get address by id",
+    response_model=address_user_schema.AddressWithUser,
+    responses={404: {"description": "Cannot find address for the provided id."}},
+)
+def get_address(address_id: int, db: Session = Depends(get_db)):
+    address = db.query(models.Address).filter(models.Address.id == address_id).first()
+    if address is None:
+        raise raise_404_error(detail="Cannot find address for the provided id.")
+    return address
+
+
 @router.post(
     "/",
     status_code=status.HTTP_200_OK,
     summary="Add an address for user",
-    response_model=address_schema.AddressOut,
+    response_model=address_user_schema.AddressOut,
 )
 def create_address(
     address: address_schema.AddressIn,
