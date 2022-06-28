@@ -1,26 +1,31 @@
-from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, TIMESTAMP, text
+from sqlalchemy.orm import relationship, validates
+from sqlalchemy.sql import func
 
 from todo_proj.database import Base
 
 
-# TODO: How am I going to return resources including every related nested object (serialization)?
+class TimestampMixin(object):
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(
+        TIMESTAMP, server_default=text("NULL ON UPDATE CURRENT_TIMESTAMP")
+    )
 
 
-class Todo(Base):
+class Todo(Base, TimestampMixin):
     __tablename__ = "todo"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200))
     description = Column(String(500))
     priority = Column(Integer)
-    complete = Column(Boolean, default=False)
+    isCompleted = Column(Boolean, default=False)
     owner_id = Column(Integer, ForeignKey("user.id"))
 
     owner = relationship("User", back_populates="todos")
 
 
-class User(Base):
+class User(Base, TimestampMixin):
     __tablename__ = "user"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -34,10 +39,16 @@ class User(Base):
     address_id = Column(Integer, ForeignKey("address.id"), nullable=True)
 
     todos = relationship("Todo", back_populates="owner")
-    address = relationship("Address", back_populates="resident", uselist=False)
+    address = relationship("Address", back_populates="user", uselist=False)
+
+    @validates("email")
+    def validate_email(self, key, user):
+        if "@" not in user:
+            raise ValueError("failed simple email validation")
+        return user
 
 
-class Address(Base):
+class Address(Base, TimestampMixin):
     __tablename__ = "address"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -48,6 +59,5 @@ class Address(Base):
     country = Column(String(100))
     zipcode = Column(String(5))
     apt_num = Column(String(20))
-    # resident_id = Column(Integer, ForeignKey("user.id"), nullable=False)
 
-    resident = relationship("User", back_populates="address", uselist=False)
+    user = relationship("User", back_populates="address", uselist=False)

@@ -128,8 +128,8 @@ def update_todo(
         todo_by_id.description = todo.description
     if todo.priority:
         todo_by_id.priority = todo.priority
-    if todo.complete:
-        todo_by_id.complete = todo.complete
+    if todo.isCompleted:
+        todo_by_id.complete = todo.isCompleted
 
     db.commit()
 

@@ -6,11 +6,10 @@ Revises: 7f3eb1e55c94
 Create Date: 2022-06-28 17:17:39.770324
 
 """
-from alembic import op
 import sqlalchemy as sa
 import sqlalchemy.sql as func
+from alembic import op
 from sqlalchemy import text
-
 
 # revision identifiers, used by Alembic.
 revision = "eac4ea57cb84"
@@ -31,8 +30,9 @@ def upgrade() -> None:
         "todo",
         "updated_at",
         type=sa.TIMESTAMP,
-        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
+        server_default=text("NULL ON UPDATE CURRENT_TIMESTAMP"),
         existing_type=sa.DateTime(),
+        nullable=True,
     )
     op.alter_column(
         "user",
@@ -45,8 +45,9 @@ def upgrade() -> None:
         "user",
         "updated_at",
         type=sa.TIMESTAMP,
-        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
+        server_default=text("NULL ON UPDATE CURRENT_TIMESTAMP"),
         existing_type=sa.DateTime(),
+        nullable=True,
     )
     op.alter_column(
         "address",
@@ -59,8 +60,9 @@ def upgrade() -> None:
         "address",
         "updated_at",
         type=sa.TIMESTAMP,
-        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
+        server_default=text("NULL ON UPDATE CURRENT_TIMESTAMP"),
         existing_type=sa.DateTime(),
+        nullable=True,
     )
 
 
