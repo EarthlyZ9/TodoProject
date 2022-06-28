@@ -43,7 +43,7 @@ def get_all_users(db: Session = Depends(get_db)):
     status_code=status.HTTP_200_OK,
     summary="Get user by user id (path).",
     operation_id="get_user_by_path",
-    response_model=user_schema.UserInDB,
+    response_model=user_schema.UserWithAddress,
 )
 def get_user_by_path(user_id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -57,7 +57,7 @@ def get_user_by_path(user_id: int, db: Session = Depends(get_db)):
     status_code=status.HTTP_200_OK,
     summary="Get user by user id (query params).",
     operation_id="get_user_by_query_params",
-    response_model=user_schema.UserOut,
+    response_model=user_schema.UserWithAddress,
 )
 def get_user_by_query_params(user_id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == user_id).first()

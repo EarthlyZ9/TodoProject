@@ -44,7 +44,7 @@ def get_address(address_id: int, db: Session = Depends(get_db)):
     "/",
     status_code=status.HTTP_200_OK,
     summary="Add an address for user",
-    response_model=address_user_schema.AddressOut,
+    response_model=address_user_schema.AddressWithUser,
 )
 def create_address(
     address: address_schema.AddressIn,
