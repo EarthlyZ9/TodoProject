@@ -3,11 +3,11 @@ import sys
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from dependencies import raise_404_error, get_authorization_exception
+from todo_proj.dependencies import raise_404_error, get_authorization_exception
 from routers.auth import get_current_user
 from schemas import todo_schema
-from sql_app import models
-from sql_app.database import engine, SessionLocal
+from todo_proj import models
+from todo_proj.database import engine, SessionLocal
 
 sys.path.append("..")
 
@@ -48,8 +48,8 @@ def get_all_admin(db: Session = Depends(get_db)):
 )
 def create_todo(
     todo: todo_schema.TodoIn,
-    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ):
     new_todo = models.Todo()
     new_todo.title = todo.title
@@ -68,7 +68,7 @@ def create_todo(
     "/", summary="Get all todos of current user.", status_code=status.HTTP_200_OK
 )
 def get_todos(
-    current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)
+    db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)
 ):
     todos = db.query(models.Todo).filter(models.Todo.owner_id == current_user.id).all()
     return todos
@@ -83,8 +83,8 @@ def get_todos(
 )
 def get_todo_by_id(
     todo_id: int,
-    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ):
     todo_model = (
         db.query(models.Todo)
@@ -107,8 +107,8 @@ def get_todo_by_id(
 def update_todo(
     todo_id: int,
     todo: todo_schema.TodoIn,
-    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ):
     todo_by_id = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
     if todo_by_id is None:
@@ -146,8 +146,8 @@ def update_todo(
 )
 def delete_todo(
     todo_id: int,
-    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ):
     todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
     if todo is None:

@@ -1,12 +1,14 @@
 import sys
 
 from fastapi import APIRouter, Depends, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from routers.auth import get_current_user
 from schemas import address_schema
-from sql_app import models
-from sql_app.database import SessionLocal
+from todo_proj import models
+from todo_proj.database import SessionLocal
 
 sys.path.append("..")
 
@@ -33,22 +35,25 @@ def get_db():
 )
 def create_address(
     address: address_schema.AddressIn,
-    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ):
-    address_model = models.Address()
-    address_model.address1 = address.address1
-    address_model.address2 = address.address2
-    address_model.state = address.state
-    address_model.city = address.city
-    address_model.country = address.country
-    address_model.zipcode = address.zipcode
+    address_model = models.Address(**address.dict())
+    # address_model.address1 = address.address1
+    # address_model.address2 = address.address2
+    # address_model.state = address.state
+    # address_model.city = address.city
+    # address_model.country = address.country
+    # address_model.zipcode = address.zipcode
 
     db.add(address_model)
     db.flush()  # returns id
 
     user = db.query(models.User).filter(models.User.id == current_user.id).first()
+
     user.address_id = address_model.id
+    user.address = address_model
+    db.add(user)
 
     db.commit()
 

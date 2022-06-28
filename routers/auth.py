@@ -8,11 +8,11 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
-from dependencies import get_user_exception, invalid_authentication_exception
+from todo_proj.dependencies import get_user_exception, invalid_authentication_exception
 from schemas import user_schema
-from sql_app import models
-from sql_app.database import SessionLocal, engine
-from sql_app.database import secrets
+from todo_proj import models
+from todo_proj.database import SessionLocal, engine
+from todo_proj.database import secrets
 
 sys.path.append("..")
 
