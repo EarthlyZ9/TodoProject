@@ -39,7 +39,7 @@ class User(Base, TimestampMixin):
     address_id = Column(Integer, ForeignKey("address.id"), nullable=True)
 
     todos = relationship("Todo", back_populates="owner")
-    address = relationship("Address", back_populates="user", uselist=False)
+    address = relationship("Address", back_populates="user")
 
     @validates("email")
     def validate_email(self, key, user):

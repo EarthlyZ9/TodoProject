@@ -122,16 +122,12 @@ def update_todo(
         if todo_by_id is None:
             raise get_authorization_exception()
 
-    if todo.title:
-        todo_by_id.title = todo.title
-    if todo.description:
-        todo_by_id.description = todo.description
-    if todo.priority:
-        todo_by_id.priority = todo.priority
-    if todo.isCompleted:
-        todo_by_id.complete = todo.isCompleted
-
+    todo_data = todo.dict(exclude_unset=True)
+    for key, value in todo_data.items():
+        setattr(todo_by_id, key, value)
+    db.add(todo_by_id)
     db.commit()
+    db.refresh(todo_by_id)
 
     return todo_by_id
 

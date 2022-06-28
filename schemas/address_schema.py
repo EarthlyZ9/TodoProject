@@ -1,12 +1,13 @@
 import copy
-from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, Field
+from typing import Optional, Union
+
+from pydantic import BaseModel
 
 
 class AddressIn(BaseModel):
     address1: str
-    address2: Optional[str]
+    address2: Union[str, None] = None
     apt_num: Optional[str]
     city: str
     state: str
@@ -38,3 +39,16 @@ class AddressOut(AddressIn):
         schema_extra["example"]["id"] = 0
         schema_extra["example"]["created_at"] = "2022-06-28 16:55:47"
         schema_extra["example"]["updated_at"] = "2022-06-29 17:00:42"
+
+
+class AddressUpdate(BaseModel):
+    address1: Optional[str]
+    address2: Union[str, None] = None
+    apt_num: Union[str, None] = None
+    city: Optional[str]
+    state: Optional[str]
+    country: Optional[str]
+    zipcode: Optional[str]
+
+    class Config(AddressIn.Config):
+        pass

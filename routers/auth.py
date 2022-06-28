@@ -2,23 +2,24 @@ import sys
 from datetime import datetime, timedelta
 from typing import Union
 
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import exists
 
-from todo_proj.dependencies import get_user_exception, invalid_authentication_exception
 from schemas import user_schema
 from todo_proj import models
 from todo_proj.database import SessionLocal, engine
 from todo_proj.database import secrets
+from todo_proj.dependencies import get_user_exception, invalid_authentication_exception
 
 sys.path.append("..")
 
 JWT_SECRET_KEY = secrets["JWT_SECRET_KEY"]
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+ACCESS_TOKEN_EXPIRE_MINUTES = 1000
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -46,7 +47,7 @@ def verify_password(plain_password, hashed_password):
     return bcrypt_context.verify(plain_password, hashed_password)
 
 
-def save_user(user: user_schema.UserIn):
+def save_user(user: user_schema.UserSignup):
     hashed_password = hash_password(user.password)
     user_in_db = user_schema.UserInDB(**user.dict(), hashed_password=hashed_password)
     return user_in_db
@@ -92,16 +93,23 @@ async def get_current_user(
     "/signup",
     summary="Sign up",
     response_model=user_schema.UserOut,
-    responses={201: {"description": "Created user."}},
+    responses={
+        201: {"description": "Created user."},
+        409: {"description": "User email already exists."},
+    },
 )
-def create_user(user: user_schema.UserIn, db: Session = Depends(get_db)):
+def create_user(user: user_schema.UserSignup, db: Session = Depends(get_db)):
+    if db.query(exists().where(models.User.email == user.email)):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="User email already exists."
+        )
     new_user = models.User(**save_user(user).dict())
     db.add(new_user)
     db.commit()
     return new_user
 
 
-@router.post("/token", summary="Login")
+@router.post("/login", summary="Login")
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
@@ -114,3 +122,29 @@ def login_for_access_token(
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.patch(
+    "/change-password",
+    status_code=status.HTTP_200_OK,
+    summary="Update current user's password with user verification.",
+    operation_id="update_user_password",
+    response_model=user_schema.UserOut,
+    responses={200: {"description": "User password updated successfully."}},
+)
+def update_user_password(
+    user_verification: user_schema.UserVerification,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    user = db.query(models.User).filter(models.User.id == current_user.id).first()
+
+    if user_verification.username == user.username and verify_password(
+        user_verification.password, user.hashed_password
+    ):
+        user.hashed_password = hash_password(user_verification.new_password)
+        db.add(user)
+        db.commit()
+
+        return user
+    raise invalid_authentication_exception()

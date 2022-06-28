@@ -3,11 +3,11 @@ import sys
 from fastapi import APIRouter, status, Depends
 from sqlalchemy.orm import Session
 
-from routers.auth import get_current_user, hash_password, verify_password
+from routers.auth import get_current_user
 from schemas import user_schema
 from todo_proj import models
 from todo_proj.database import engine, SessionLocal
-from todo_proj.dependencies import raise_404_error, invalid_authentication_exception
+from todo_proj.dependencies import raise_404_error
 
 sys.path.append("..")
 
@@ -39,27 +39,30 @@ def get_all_users(db: Session = Depends(get_db)):
 
 
 @router.get(
-    "/{user_id}",
+    "/",
     status_code=status.HTTP_200_OK,
-    summary="Get user by user id (path).",
-    operation_id="get_user_by_path",
+    summary="Get current user's data",
     response_model=user_schema.UserWithAddress,
+    operation_id="get_user",
 )
-def get_user_by_path(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    if user is None:
-        raise raise_404_error(detail="Cannot find user for the provided id.")
-    return user
+def get_user(
+    current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)
+):
+    return current_user
 
 
 @router.get(
-    "/",
+    "/{user_id}",
     status_code=status.HTTP_200_OK,
-    summary="Get user by user id (query params).",
-    operation_id="get_user_by_query_params",
-    response_model=user_schema.UserWithAddress,
+    summary="Get user by user id",
+    operation_id="get_user_by_path",
+    response_model=user_schema.UserBase,
 )
-def get_user_by_query_params(user_id: int, db: Session = Depends(get_db)):
+def get_user_by_path(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if user is None:
         raise raise_404_error(detail="Cannot find user for the provided id.")
@@ -69,26 +72,23 @@ def get_user_by_query_params(user_id: int, db: Session = Depends(get_db)):
 @router.patch(
     "/",
     status_code=status.HTTP_200_OK,
-    summary="Update current user's password with user verification.",
-    operation_id="update_user_password",
+    summary="Update current user's phone number",
     response_model=user_schema.UserOut,
-    responses={200: {"description": "User password updated successfully."}},
+    operation_id="update_phone_number",
 )
-def update_user_password(
-    user_verification: user_schema.UserVerification,
-    db: Session = Depends(get_db),
+def update_phone_number(
+    new_data: user_schema.UserUpdate,
     current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     user = db.query(models.User).filter(models.User.id == current_user.id).first()
-
-    if user_verification.username == user.username and verify_password(
-        user_verification.password, user.hashed_password
-    ):
-        user.hashed_password = hash_password(user_verification.new_password)
-        db.commit()
-
-        return user
-    raise invalid_authentication_exception()
+    user_data = new_data.dict(exclude_unset=True)
+    for key, value in user_data.items():
+        setattr(user, key, value)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 @router.delete(

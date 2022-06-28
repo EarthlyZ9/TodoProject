@@ -1,6 +1,7 @@
 import copy
-from typing import Optional, Union
 from datetime import datetime
+from typing import Optional, Union
+
 from pydantic import BaseModel, Field
 
 from schemas.address_schema import AddressOut
@@ -11,8 +12,6 @@ class UserBase(BaseModel):
     email: str
     first_name: str
     last_name: str
-    phone_number: Optional[str]
-    is_active: bool = Field(default=True)
 
     class Config:
         orm_mode = True
@@ -22,34 +21,38 @@ class UserBase(BaseModel):
                 "email": "linda2927@naver.com",
                 "first_name": "Jisoo",
                 "last_name": "Lee",
-                "phone_number": "01029277729",
-                "is_active": True,
             }
         }
 
 
-class UserIn(UserBase):
+class UserSignup(UserBase):
     password: str
+    phone_number: Optional[str]
 
     class Config(UserBase.Config):
         schema_extra = copy.deepcopy(UserBase.Config.schema_extra)
         schema_extra["example"]["password"] = "linda2927"
+        schema_extra["example"]["phone_number"] = "01029277729"
 
 
 class UserOut(UserBase):
     id: int
+    is_active: bool = Field(default=True)
+    phone_number: Union[str, None] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 
     class Config(UserBase.Config):
         schema_extra = copy.deepcopy(UserBase.Config.schema_extra)
         schema_extra["example"]["id"] = 0
+        schema_extra["example"]["is_active"] = True
+        schema_extra["example"]["phone_number"] = "01029277729"
         schema_extra["example"]["created_at"] = "2022-06-28 16:55:47"
         schema_extra["example"]["updated_at"] = "2022-06-29 17:00:42"
 
 
 class UserWithAddress(UserOut):
-    address: AddressOut
+    address: Optional[AddressOut]
 
     class Config(UserOut.Config):
         schema_extra = copy.deepcopy(UserOut.Config.schema_extra)
@@ -64,11 +67,13 @@ class UserWithAddress(UserOut):
         }
 
 
-class UserInDB(UserOut):
+class UserInDB(UserBase):
+    phone_number: Optional[str]
     hashed_password: str
 
-    class Config(UserOut.Config):
+    class Config(UserBase.Config):
         schema_extra = copy.deepcopy(UserBase.Config.schema_extra)
+        schema_extra["example"]["phone_number"] = "01029277729"
         schema_extra["example"]["hashed_password"] = ""
 
 
@@ -86,3 +91,11 @@ class UserVerification(BaseModel):
                 "new_password": "password2",
             }
         }
+
+
+class UserUpdate(BaseModel):
+    phone_number: str = Field(default=None, max_length=11, min_length=11)
+
+    class Config:
+        orm_mode = True
+        schema_extra = {"example": {"phone_number": "01012345678"}}
