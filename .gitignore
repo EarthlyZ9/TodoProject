@@ -4,3 +4,4 @@ secrets.json
 .pre-commit-config.yaml
 *.pyc
 __pycache__/
+.DS_Store
