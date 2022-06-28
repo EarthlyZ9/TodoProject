@@ -1,0 +1,6 @@
+.idea
+.venv
+secrets.json
+.pre-commit-config.yaml
+*.pyc
+__pycache__/
