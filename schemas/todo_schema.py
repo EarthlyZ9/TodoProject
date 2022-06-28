@@ -10,7 +10,7 @@ class TodoIn(BaseModel):
     priority: Optional[int] = Field(
         gt=0, lt=6, description="The priority must be between 1 and 5."
     )
-    complete: Optional[bool] = Field(default=False)
+    isCompleted: Optional[bool] = Field(default=False)
 
     class Config:
         orm_mode = True
@@ -19,7 +19,7 @@ class TodoIn(BaseModel):
                 "title": "Study FastAPI",
                 "description": "Go to Udemy courses",
                 "priority": 3,
-                "complete": False,
+                "isCompleted": False,
             }
         }
 

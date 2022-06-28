@@ -3,11 +3,11 @@ import sys
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from todo_proj.dependencies import raise_404_error, get_authorization_exception
 from routers.auth import get_current_user
 from schemas import todo_schema
 from todo_proj import models
 from todo_proj.database import engine, SessionLocal
+from todo_proj.dependencies import raise_404_error, get_authorization_exception
 
 sys.path.append("..")
 
@@ -51,12 +51,13 @@ def create_todo(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    new_todo = models.Todo()
-    new_todo.title = todo.title
-    new_todo.description = todo.description
-    new_todo.priority = todo.priority
-    new_todo.complete = todo.complete
-    new_todo.owner_id = current_user.id
+    new_todo = models.Todo(**todo.dict(), owner_id=current_user.id)
+    # new_todo = models.Todo()
+    # new_todo.title = todo.title
+    # new_todo.description = todo.description
+    # new_todo.priority = todo.priority
+    # new_todo.complete = todo.complete
+    # new_todo.owner_id = current_user.id
 
     db.add(new_todo)
     db.commit()
@@ -67,11 +68,9 @@ def create_todo(
 @router.get(
     "/", summary="Get all todos of current user.", status_code=status.HTTP_200_OK
 )
-def get_todos(
-    db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)
-):
-    todos = db.query(models.Todo).filter(models.Todo.owner_id == current_user.id).all()
-    return todos
+def get_todos(current_user: models.User = Depends(get_current_user)):
+    # todos = db.query(models.Todo).filter(models.Todo.owner_id == current_user.id).all()
+    return current_user.todos
 
 
 @router.get(

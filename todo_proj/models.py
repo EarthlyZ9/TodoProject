@@ -4,9 +4,6 @@ from sqlalchemy.orm import relationship
 from todo_proj.database import Base
 
 
-# TODO: How am I going to return resources including every related nested object (serialization)?
-
-
 class Todo(Base):
     __tablename__ = "todo"
 
@@ -14,7 +11,7 @@ class Todo(Base):
     title = Column(String(200))
     description = Column(String(500))
     priority = Column(Integer)
-    complete = Column(Boolean, default=False)
+    isCompleted = Column(Boolean, default=False)
     owner_id = Column(Integer, ForeignKey("user.id"))
 
     owner = relationship("User", back_populates="todos")
