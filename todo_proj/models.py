@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
-from sql_app.database import Base
+from todo_proj.database import Base
 
 
 # TODO: How am I going to return resources including every related nested object (serialization)?
@@ -34,7 +34,7 @@ class User(Base):
     address_id = Column(Integer, ForeignKey("address.id"), nullable=True)
 
     todos = relationship("Todo", back_populates="owner")
-    address = relationship("Address", back_populates="user_address")
+    address = relationship("Address", back_populates="resident", uselist=False)
 
 
 class Address(Base):
@@ -47,5 +47,7 @@ class Address(Base):
     state = Column(String(50))
     country = Column(String(100))
     zipcode = Column(String(5))
+    apt_num = Column(String(20))
+    # resident_id = Column(Integer, ForeignKey("user.id"), nullable=False)
 
-    user_address = relationship("User", back_populates="address")
+    resident = relationship("User", back_populates="address", uselist=False)

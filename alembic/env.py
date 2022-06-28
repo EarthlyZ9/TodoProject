@@ -5,7 +5,7 @@ from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from sql_app import models
+from todo_proj import models
 
 sys.path.append("...")
 # this is the Alembic Config object, which provides
