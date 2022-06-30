@@ -97,7 +97,7 @@ def delete_address(
     response_model=address_user_schema.AddressWithUser,
 )
 def create_address(
-    address: address_schema.AddressIn,
+    address: address_schema.AddressCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

@@ -2,16 +2,19 @@ import copy
 from datetime import datetime
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
 from app.schemas.address_schema import AddressOut
 
 
 class UserBase(BaseModel):
     username: str
-    email: str
+    email: EmailStr
     first_name: str
     last_name: str
+    is_active: bool = True
+    is_admin: bool = False
+    is_superuser: bool = False
 
     class Config:
         orm_mode = True
@@ -21,11 +24,14 @@ class UserBase(BaseModel):
                 "email": "linda2927@naver.com",
                 "first_name": "Jisoo",
                 "last_name": "Lee",
+                "is_active": True,
+                "is_admin": False,
+                "is_superuser": False,
             }
         }
 
 
-class UserSignup(UserBase):
+class UserCreate(UserBase):
     password: str
     phone_number: Optional[str]
 
@@ -37,15 +43,13 @@ class UserSignup(UserBase):
 
 class UserOut(UserBase):
     id: int
-    is_active: bool = Field(default=True)
     phone_number: Union[str, None] = None
-    created_at: datetime
+    created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     class Config(UserBase.Config):
         schema_extra = copy.deepcopy(UserBase.Config.schema_extra)
         schema_extra["example"]["id"] = 0
-        schema_extra["example"]["is_active"] = True
         schema_extra["example"]["phone_number"] = "01029277729"
         schema_extra["example"]["created_at"] = "2022-06-28 16:55:47"
         schema_extra["example"]["updated_at"] = "2022-06-29 17:00:42"
@@ -67,11 +71,10 @@ class UserWithAddress(UserOut):
         }
 
 
-class UserInDB(UserBase):
-    phone_number: Optional[str]
+class UserInDB(UserOut):
     hashed_password: str
 
-    class Config(UserBase.Config):
+    class Config(UserOut.Config):
         schema_extra = copy.deepcopy(UserBase.Config.schema_extra)
         schema_extra["example"]["phone_number"] = "01029277729"
         schema_extra["example"]["hashed_password"] = ""

@@ -33,7 +33,7 @@ def get_all_admin(db: Session = Depends(get_db)):
     operation_id="create_todo",
 )
 def create_todo(
-    todo: todo_schema.TodoIn,
+    todo: todo_schema.TodoCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -83,7 +83,7 @@ def get_todo_by_id(
 )
 def update_todo(
     todo_id: int,
-    todo: todo_schema.TodoIn,
+    todo: todo_schema.TodoCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
