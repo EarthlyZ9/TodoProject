@@ -29,7 +29,7 @@ def verify_password(plain_password, hashed_password):
     return bcrypt_context.verify(plain_password, hashed_password)
 
 
-def save_user(user: user_schema.UserSignup):
+def save_user(user: user_schema.UserCreate):
     hashed_password = hash_password(user.password)
     user_in_db = user_schema.UserInDB(**user.dict(), hashed_password=hashed_password)
     return user_in_db
@@ -54,7 +54,7 @@ def create_access_token(
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
-        to_encode, settings.JWT_SECRET_KEY, algorithm=settings.ALGORITHM
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
     )
     return encoded_jwt
 
@@ -68,7 +68,7 @@ def create_access_token(
         409: {"description": "User email already exists."},
     },
 )
-def create_user(user: user_schema.UserSignup, db: Session = Depends(get_db)):
+def create_user(user: user_schema.UserCreate, db: Session = Depends(get_db)):
     if db.query(exists().where(User.email == user.email)):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="User email already exists."

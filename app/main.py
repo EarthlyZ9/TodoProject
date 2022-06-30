@@ -14,8 +14,6 @@ description = """
 
     This includes:
 
-    * **Authentication** (_not implemented_).
-    * **Authorization** (_not implemented_).
 """
 
 tags_metadata = [
@@ -44,11 +42,7 @@ app = FastAPI(
     contact={
         "name": "Earthly Jisoo",
         "url": "https://github.com/linda2927",
-        "email": "linda2927@naver.com",
-    },
-    license_info={
-        "name": "Apache 2.0",
-        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+        "email": "earthlyz9.dev@gmail.com",
     },
     openapi_tags=tags_metadata,
 )
