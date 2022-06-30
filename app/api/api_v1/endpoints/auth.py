@@ -1,42 +1,24 @@
-import sys
 from datetime import datetime, timedelta
 from typing import Union
 
 from fastapi import Depends, APIRouter, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from jose import jwt, JWTError
+from fastapi.security import OAuth2PasswordRequestForm
+from jose import jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import exists
 
-from schemas import user_schema
-from todo_proj import models
-from todo_proj.database import SessionLocal, engine
-from todo_proj.database import secrets
-from todo_proj.dependencies import get_user_exception, invalid_authentication_exception
-
-sys.path.append("..")
-
-JWT_SECRET_KEY = secrets["JWT_SECRET_KEY"]
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 1000
-
-bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-models.Base.metadata.create_all(bind=engine)
-oauth2_bearer = OAuth2PasswordBearer(tokenUrl="token")
+from app.api.deps import get_current_user, get_db
+from app.core.config import settings
+from app.dependencies import invalid_authentication_exception
+from app.models.user import User
+from app.schemas import user_schema
 
 router = APIRouter(
     prefix="/auth", tags=["Auth"], responses={401: {"user": "Not authorized."}}
 )
 
-
-def get_db():
-    try:
-        db = SessionLocal()
-        yield db
-    finally:
-        db.close()
+bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str):
@@ -54,7 +36,7 @@ def save_user(user: user_schema.UserSignup):
 
 
 def authenticate_user(username: str, password: str, db):
-    user = db.query(models.User).filter(models.User.username == username).first()
+    user = db.query(User).filter(User.username == username).first()
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -71,22 +53,10 @@ def create_access_token(
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.JWT_SECRET_KEY, algorithm=settings.ALGORITHM
+    )
     return encoded_jwt
-
-
-async def get_current_user(
-    token: str = Depends(oauth2_bearer), db: Session = Depends(get_db)
-):
-    try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=ALGORITHM)
-        username: str = payload.get("sub")
-        user_id: int = payload.get("id")
-        if username is None or user_id is None:
-            raise get_user_exception()
-        return db.query(models.User).filter(models.User.id == user_id).first()
-    except JWTError:
-        raise get_user_exception()
 
 
 @router.post(
@@ -99,11 +69,11 @@ async def get_current_user(
     },
 )
 def create_user(user: user_schema.UserSignup, db: Session = Depends(get_db)):
-    if db.query(exists().where(models.User.email == user.email)):
+    if db.query(exists().where(User.email == user.email)):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="User email already exists."
         )
-    new_user = models.User(**save_user(user).dict())
+    new_user = User(**save_user(user).dict())
     db.add(new_user)
     db.commit()
     return new_user
@@ -116,7 +86,7 @@ def login_for_access_token(
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise invalid_authentication_exception()
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         user.username, user.id, expires_delta=access_token_expires
     )
@@ -135,9 +105,9 @@ def login_for_access_token(
 def update_user_password(
     user_verification: user_schema.UserVerification,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    user = db.query(models.User).filter(models.User.id == current_user.id).first()
+    user = db.query(User).filter(User.id == current_user.id).first()
 
     if user_verification.username == user.username and verify_password(
         user_verification.password, user.hashed_password

@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 
-from routers import auth, todos, users, address
-from todo_proj import models
-from todo_proj.database import engine
+from app.api.api_v1.api import api_router
+from app.core.config import settings
 
 description = """
     TODO Project API 🚀
@@ -39,7 +38,7 @@ tags_metadata = [
 ]
 
 app = FastAPI(
-    title="Todo Project API",
+    title=settings.PROJECT_NAME,
     description=description,
     version="0.0.1",
     contact={
@@ -54,11 +53,13 @@ app = FastAPI(
     openapi_tags=tags_metadata,
 )
 
-models.Base.metadata.create_all(bind=engine)
-app.include_router(auth.router)
-app.include_router(todos.router)
-app.include_router(users.router)
-app.include_router(address.router)
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
-# TODO: v1
-# TODO: crud 분리
+# if settings.BACKEND_CORS_ORIGINS:
+#     app.add_middleware(
+#         CORSMiddleware,
+#         allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+#         allow_credentials=True,
+#         allow_methods=["*"],
+#         allow_headers=["*"],
+#     )

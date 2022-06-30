@@ -1,8 +1,8 @@
 import copy
 from typing import Union
 
-from schemas.address_schema import AddressOut
-from schemas.user_schema import UserOut
+from app.schemas.address_schema import AddressOut
+from app.schemas.user_schema import UserOut
 
 
 # class UserBase(BaseModel):

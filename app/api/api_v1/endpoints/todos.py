@@ -1,31 +1,17 @@
-import sys
-
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from routers.auth import get_current_user
-from schemas import todo_schema
-from todo_proj import models
-from todo_proj.database import engine, SessionLocal
-from todo_proj.dependencies import raise_404_error, get_authorization_exception
-
-sys.path.append("..")
+from app.api.deps import get_current_user, get_db
+from app.dependencies import raise_404_error, get_authorization_exception
+from app.models.todo import Todo
+from app.models.user import User
+from app.schemas import todo_schema
 
 router = APIRouter(
     prefix="/todos",
     tags=["Todos"],
     responses={404: {"description": "Cannot find todo for the provided id."}},
 )
-
-models.Base.metadata.create_all(bind=engine)
-
-
-def get_db():
-    try:
-        db = SessionLocal()
-        yield db
-    finally:
-        db.close()
 
 
 @router.get(
@@ -36,7 +22,7 @@ def get_db():
     operation_id="get_all_admin",
 )
 def get_all_admin(db: Session = Depends(get_db)):
-    return db.query(models.Todo).all()
+    return db.query(Todo).all()
 
 
 @router.post(
@@ -49,16 +35,9 @@ def get_all_admin(db: Session = Depends(get_db)):
 def create_todo(
     todo: todo_schema.TodoIn,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    new_todo = models.Todo(**todo.dict(), owner_id=current_user.id)
-    # new_todo = models.Todo()
-    # new_todo.title = todo.title
-    # new_todo.description = todo.description
-    # new_todo.priority = todo.priority
-    # new_todo.complete = todo.complete
-    # new_todo.owner_id = current_user.id
-
+    new_todo = Todo(**todo.dict(), owner_id=current_user.id)
     db.add(new_todo)
     db.commit()
 
@@ -68,8 +47,7 @@ def create_todo(
 @router.get(
     "/", summary="Get all todos of current user.", status_code=status.HTTP_200_OK
 )
-def get_todos(current_user: models.User = Depends(get_current_user)):
-    # todos = db.query(models.Todo).filter(models.Todo.owner_id == current_user.id).all()
+def get_todos(current_user: User = Depends(get_current_user)):
     return current_user.todos
 
 
@@ -83,12 +61,12 @@ def get_todos(current_user: models.User = Depends(get_current_user)):
 def get_todo_by_id(
     todo_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     todo_model = (
-        db.query(models.Todo)
-        .filter(models.Todo.id == todo_id)
-        .filter(models.Todo.owner_id == current_user.id)
+        db.query(Todo)
+        .filter(Todo.id == todo_id)
+        .filter(Todo.owner_id == current_user.id)
         .first()
     )
     if todo_model is not None:
@@ -107,16 +85,16 @@ def update_todo(
     todo_id: int,
     todo: todo_schema.TodoIn,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    todo_by_id = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
+    todo_by_id = db.query(Todo).filter(Todo.id == todo_id).first()
     if todo_by_id is None:
         raise raise_404_error()
     else:
         todo_by_id = (
-            db.query(models.Todo)
-            .filter(models.Todo.id == todo_id)
-            .filter(models.Todo.owner_id == current_user.id)
+            db.query(Todo)
+            .filter(Todo.id == todo_id)
+            .filter(Todo.owner_id == current_user.id)
             .first()
         )
         if todo_by_id is None:
@@ -142,22 +120,22 @@ def update_todo(
 def delete_todo(
     todo_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
+    todo = db.query(Todo).filter(Todo.id == todo_id).first()
     if todo is None:
         raise raise_404_error("Cannot find todo for the provided id.")
     else:
         todo = (
-            db.query(models.Todo)
-            .filter(models.Todo.id == todo_id)
-            .filter(models.Todo.owner_id == current_user.id)
+            db.query(Todo)
+            .filter(Todo.id == todo_id)
+            .filter(Todo.owner_id == current_user.id)
             .first()
         )
         if todo is None:
             raise get_authorization_exception()
 
-    db.query(models.Todo).filter(models.Todo.id == todo_id).delete()
+    db.query(Todo).filter(Todo.id == todo_id).delete()
 
     db.commit()
 

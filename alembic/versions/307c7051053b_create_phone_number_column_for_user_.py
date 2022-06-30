@@ -5,7 +5,6 @@ Revises:
 Create Date: 2022-06-24 09:14:45.341968
 
 """
-import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -16,7 +15,8 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("user", sa.Column("phone_number", sa.String(11), nullable=True))
+    # op.add_column("user", sa.Column("phone_number", sa.String(11), nullable=True))
+    pass
 
 
 def downgrade() -> None:
