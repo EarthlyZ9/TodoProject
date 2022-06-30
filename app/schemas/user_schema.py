@@ -4,7 +4,7 @@ from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
-from schemas.address_schema import AddressOut
+from app.schemas.address_schema import AddressOut
 
 
 class UserBase(BaseModel):

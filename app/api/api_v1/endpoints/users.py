@@ -1,31 +1,16 @@
-import sys
-
 from fastapi import APIRouter, status, Depends
 from sqlalchemy.orm import Session
 
-from routers.auth import get_current_user
-from schemas import user_schema
-from todo_proj import models
-from todo_proj.database import engine, SessionLocal
-from todo_proj.dependencies import raise_404_error
-
-sys.path.append("..")
+from app.api.deps import get_current_user, get_db
+from app.dependencies import raise_404_error
+from app.models.user import User
+from app.schemas import user_schema
 
 router = APIRouter(
     prefix="/users",
     tags=["Users"],
     responses={404: {"description": "Cannot find user for the provided id"}},
 )
-
-models.Base.metadata.create_all(bind=engine)
-
-
-def get_db():
-    try:
-        db = SessionLocal()
-        yield db
-    finally:
-        db.close()
 
 
 @router.get(
@@ -35,7 +20,7 @@ def get_db():
     operation_id="get_all_users",
 )
 def get_all_users(db: Session = Depends(get_db)):
-    return db.query(models.User).all()
+    return db.query(User).all()
 
 
 @router.get(
@@ -46,7 +31,7 @@ def get_all_users(db: Session = Depends(get_db)):
     operation_id="get_user",
 )
 def get_user(
-    current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     return current_user
 
@@ -61,9 +46,9 @@ def get_user(
 def get_user_by_path(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    user = db.query(models.User).filter(models.User.id == user_id).first()
+    user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise raise_404_error(detail="Cannot find user for the provided id.")
     return user
@@ -78,10 +63,10 @@ def get_user_by_path(
 )
 def update_phone_number(
     new_data: user_schema.UserUpdate,
-    current_user: models.User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    user = db.query(models.User).filter(models.User.id == current_user.id).first()
+    user = db.query(User).filter(User.id == current_user.id).first()
     user_data = new_data.dict(exclude_unset=True)
     for key, value in user_data.items():
         setattr(user, key, value)
@@ -99,9 +84,9 @@ def update_phone_number(
     responses={200: {"description": "Successfully deleted user."}},
 )
 def delete_user(
-    db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
-    db.query(models.User).filter(models.User.id == current_user.id).delete()
+    db.query(User).filter(User.id == current_user.id).delete()
 
     db.commit()
 
