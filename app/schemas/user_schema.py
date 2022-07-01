@@ -33,7 +33,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
-    phone_number: Optional[str]
+    phone_number: Optional[str] = Field(default=None, max_length=11, min_length=11)
 
     class Config(UserBase.Config):
         schema_extra = copy.deepcopy(UserBase.Config.schema_extra)
@@ -71,15 +71,6 @@ class UserWithAddress(UserOut):
         }
 
 
-class UserInDB(UserOut):
-    hashed_password: str
-
-    class Config(UserOut.Config):
-        schema_extra = copy.deepcopy(UserBase.Config.schema_extra)
-        schema_extra["example"]["phone_number"] = "01029277729"
-        schema_extra["example"]["hashed_password"] = ""
-
-
 class UserVerification(BaseModel):
     username: str
     password: str
@@ -102,3 +93,13 @@ class UserUpdate(BaseModel):
     class Config:
         orm_mode = True
         schema_extra = {"example": {"phone_number": "01012345678"}}
+
+
+class UserInDB(UserBase):
+    hashed_password: str
+    phone_number: str = Field(default=None, max_length=11, min_length=11)
+
+    class Config(UserBase.Config):
+        schema_extra = copy.deepcopy(UserBase.Config.schema_extra)
+        schema_extra["example"]["hashed_password"] = ""
+        schema_extra["example"]["phone_number"] = "01029277729"
